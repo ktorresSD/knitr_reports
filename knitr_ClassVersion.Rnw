@@ -1,0 +1,165 @@
+% Stat 696: Knitr illustration for online video
+% Illustrating knitr to present analyses of College data from ISLR text
+% Packages required: knitr, xtable, stargazer, ISLR
+% To use, make sure to call library(knitr) first in console
+% To run and create a .tex file: knit('knitr_ClassVersion.Rnw') in R
+% August 24, 2017
+
+% Preface required in the knitr RnW file
+\documentclass{article}
+
+\usepackage{rotating}
+\usepackage{graphics}
+\usepackage{latexsym}
+\usepackage{color}
+\usepackage{listings} % allows for importing code scripts into the tex file
+\usepackage{wrapfig} % allows wrapping text around a figure
+\usepackage{lipsum} % provides Latin text to fill up a page in this illustration (do not need it otherwise!)
+\usepackage{blindtext}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+
+% Approximately 1 inch borders all around
+\setlength\topmargin{-.56in}
+\setlength\evensidemargin{0in}
+\setlength\oddsidemargin{0in}
+\setlength\textwidth{6.49in}
+\setlength\textheight{8.6in}
+
+% Options for code listing; from Patrick DeJesus, October 2016
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{backcolour},   commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+%"mystyle" code listing set
+\lstset{style=mystyle}
+%\lstset{inputpath=appendix/}
+
+
+\title{Stat 696, Example Application of \texttt{knitr}} 
+\author{Professor Levine}
+
+\begin{document} 
+\maketitle
+
+% Code to start knitr
+<<include=FALSE>>=
+  library(knitr)
+opts_chunk$set(
+  concordance=TRUE
+)
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Code snippet to load in libraries and data  
+% THIS IS HOW R-CODE IS READ INTO LaTeX DOC WITH knitr
+% Environment:  
+% <<...>>=  
+% [Code here] 
+% @
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+<<load data, include=FALSE>>=
+# Load in libraries, load in data and set up variables
+library(ISLR)
+library(stargazer)
+library(xtable)
+
+rm(list=ls(all=TRUE)) # remove all previous objects from memory
+
+# Set up data for the illustration
+# For illustration purposes we will use the College data set from the ISLR text
+# Create an indicator of Elite College status (see exercise 8 in Ch. 2 of ISLR text)
+Elite=rep("No",nrow(College))
+Elite[College$Top10perc >50]="Yes"
+Elite=as.factor(Elite)
+College=data.frame(College ,Elite)
+numvars = length(College) # number of variables in the College data set
+n = dim(College)[1]
+@
+
+First let's present an R-dump of the top of the College data set.  We emphasize that you would not include this in your data analysis report.  In this document, we just wish to illustrate how this is done in \texttt{knitr}.
+% Short view of the data
+<<view data>>=
+head(College)
+@
+
+
+We can also present results in the text using {\tt Sexpr}.  For example, in the College data set, there are \Sexpr{numvars} variables and the sample size is $n = $ \Sexpr{dim(College)[1]}.  Now let us replicate the \LaTeX\ document we created earlier in this video.
+
+Let us start with an example from {\tt stargazer}.  I cut-and-pasted the \LaTeX\ code created by stargazer in R.  Recall we added a caption and label to reference the table.  Table~\ref{descrips} presents summary statistics for the College data set.  {\em Here you would then provide a brief description of the variables and any interesting findings about the statistics displayed.}
+% We <<echo=FALSE>> to ask knitr not to present the R code in the output.
+% We use results="asis" to force knitr to present the table code for compiling in LaTeX.
+<<summary statistics, results="asis", echo=FALSE>>=
+# stargazer illustration: summary statistics of the College data set
+# Note that we add a caption (title in stargazer) and label for the LaTeX code.
+stargazer(College, title="Summary statistics for the ISLR College data set.", label="descrips")
+@
+
+\newpage
+Let us now present an example from {\tt xtable}.  I cut-and-pasted the \LaTeX\ code created by xtable in R.  Recall that we added a caption and label to the table.  Table~\ref{reginf} presents inferences for regressing the number of applications on six variables in the College data set.  We note that no model selection was run nor in-depth model diagnostics.  We merely chose six variables we thought my be important just to illustrate this regression inference table using xtable!
+% Note that we use the print function to ensure the xtable LaTeX code is produced by knitr.
+<<xtable, results="asis", echo=FALSE>>=
+# xtable illustration: inference table regresion # applications on 7 variables in College data set
+# Note: no model selection run, I just chose 7 variables I thought may be important!
+fm1 = lm(Apps~Private+Elite+Accept+Outstate+Room.Board+Grad.Rate, data = College)
+# note that we add a caption and label for the LaTeX code
+fm.table = xtable(fm1, digits=2, 
+                  caption="Inferences from regressing number of applications on whether the college is private or public,
+                  whether the college is elite or not, acceptance rate, out of state tuition, room and board, and 
+                  graduation rate.",
+                  label="reginf")
+align(fm.table) <- "|l|rrrr|"  # place vertical lines on left and right of table, and after first column of var names 
+print(fm.table)
+# xtable galleries doc on Bb has a load of other neat features!
+@
+
+\newpage
+Let us now present an example of wrapping a figure with text in \LaTeX.  Recall in the introduction to \LaTeX\ video and examples, we had \LaTeX\ decide where to put the figure.  If you want to try and save space by wrapping text around a figure, you would use the wrapfigure environment.
+% Notice that construction a figure in knitr requires setting the figure environment in LaTeX and then
+%  drawing the figure in R to send to LaTeX (so knitr R snippet within a LaTeX coded environment.)
+
+% Syntax for wrapfigure: \begin{wrapfigure}[lineheight]{position}{width}
+% Position could be R/r, l/L, i/I, o/O (right, left, inside edge, outside edge; uppercase version allows the figure to float, lowercase "exactly here".
+\begin{wrapfigure}{R}{0.5\textwidth} % second parameter specifies percentage of text width image should cover
+\centering
+% Note that we do not need the includegraphics command, knitr does that for us.
+%  But we do need to tell knitr any graphic specifications such as graphic width.
+<<echo=FALSE, out.width='0.45\\textwidth'>>=
+# Box plot of out-of-state tuition by College's elite status
+plot(College$Elite,College$Outstate, ylab = "Out of State Tuition ($)", xlab="Elite College?")
+@
+\caption{Box plot of out of state tuition against college elite status.}
+\label{boxplot}
+\end{wrapfigure}
+
+\lipsum[1]
+\lipsum[2]
+
+
+% Create an appendix of code: we will present this knitr code here, not the Rtools.R code.
+% The listing package in LaTeX provides a clean presentation of code in your report just by
+% calling the R/Rnw file itself!
+\newpage
+\noindent \Large{{\bf R Code}}
+\lstinputlisting[language=R, caption = Code Used for this knitr exercise]{knitr_ClassVersion.Rnw}
+% All you need to change is the file name and caption.
+
+\end{document}
